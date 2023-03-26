@@ -34,5 +34,10 @@ class ReminderDescriptionActivity : AppCompatActivity() {
         )
 
         binding.reminderDataItem = intent.extras?.get(EXTRA_ReminderDataItem) as ReminderDataItem
+
+        binding.buttonSave.setOnClickListener {
+            startActivity(Intent(this, RemindersActivity::class.java))
+            finish()
+        }
     }
 }

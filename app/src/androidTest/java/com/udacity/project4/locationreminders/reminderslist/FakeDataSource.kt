@@ -1,5 +1,6 @@
-package com.udacity.project4.locationreminders.data
+package com.udacity.project4.locationreminders.reminderslist
 
+import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
 
@@ -7,11 +8,7 @@ import com.udacity.project4.locationreminders.data.dto.Result
 class FakeDataSource(private var reminders: MutableList<ReminderDTO> = mutableListOf()) :
     ReminderDataSource {
 
-    private var shouldReturnError: Boolean = false
-
-    fun shouldReturnError(value: Boolean) {
-        shouldReturnError = value
-    }
+    var shouldReturnError: Boolean = false
 
     override suspend fun getReminders(): Result<List<ReminderDTO>> {
         return if (shouldReturnError)

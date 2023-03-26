@@ -1,16 +1,31 @@
 package com.udacity.project4
 
+import android.app.Activity
 import android.app.Application
+import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.*
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.contrib.RecyclerViewActions
+import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import com.google.android.gms.maps.GoogleMap
+import com.udacity.project4.base.DataBindingViewHolder
+import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
+import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
+import com.udacity.project4.util.DataBindingIdlingResource
+import com.udacity.project4.util.monitorActivity
 import kotlinx.coroutines.runBlocking
+import org.hamcrest.CoreMatchers.containsString
 import org.junit.Before
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
@@ -28,12 +43,14 @@ class RemindersActivityTest :
     private lateinit var repository: ReminderDataSource
     private lateinit var appContext: Application
 
+    private val dataBindingIdlingResource = DataBindingIdlingResource()
+
     /**
      * As we use Koin as a Service Locator Library to develop our code, we'll also use Koin to test our code.
      * at this step we will initialize Koin related code to be able to use it in out testing.
      */
     @Before
-    fun init() {
+    fun setUp() {
         stopKoin()//stop the original app koin
         appContext = getApplicationContext()
         val myModule = module {
@@ -66,6 +83,44 @@ class RemindersActivityTest :
     }
 
 
-//    TODO: add End to End testing to the app
+    //    TODO: add End to End testing to the app
+    @Test
+    fun addReminderToList() = runBlocking {
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
 
+        val poiTitle = "POI Title"
+        // Click FAB button to add reminder
+        onView(withId(R.id.addReminderFAB)).perform(click())
+
+        // Go to select location
+        onView(withId(R.id.selectLocation))
+
+        // Long press on map to add POI
+        onView(withId(R.id.fragment)).perform(longClick())
+
+        // Save selected
+        onView(withId(R.id.buttonSave)).perform(click())
+
+        // Fill missing parameters
+        onView(withId(R.id.reminderTitle)).perform(replaceText(poiTitle))
+        onView(withId(R.id.reminderDescription)).perform(replaceText("POI Description"))
+
+        // Click FAB button to save reminder
+        onView(withId(R.id.saveReminder)).perform(click())
+
+        // Verify reminder with same title is in list
+        onView(withId(R.id.reminderssRecyclerView)).check(
+            matches(
+                isDisplayed()
+            )
+        )
+        onView(withId(R.id.reminderssRecyclerView)).perform(
+            RecyclerViewActions.scrollTo<DataBindingViewHolder<ReminderDataItem>>(
+                hasDescendant(withText(poiTitle))
+            )
+        )
+
+        activityScenario.close()
+    }
 }

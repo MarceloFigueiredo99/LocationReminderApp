@@ -6,6 +6,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -13,6 +14,7 @@ import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.common.api.ResolvableApiException
@@ -20,10 +22,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.maps.*
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.MapStyleOptions
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.PointOfInterest
+import com.google.android.gms.maps.model.*
 import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
@@ -38,6 +37,7 @@ import java.util.*
 
 private const val TAG = "#LRM SelectLocationFrag"
 private const val REQUEST_LOCATION_PERMISSION = 1
+private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
 
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
@@ -61,13 +61,28 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         val mapFragment = childFragmentManager.findFragmentById(R.id.fragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-//        TODO: zoom to the user location after taking his permission
-
         binding.buttonSave.setOnClickListener {
             onLocationSelected()
         }
 
         return binding.root
+    }
+
+    @SuppressLint("MissingPermission")
+    fun zoomIn() {
+        val locationManager =
+            getSystemService(requireContext(), LocationManager::class.java) as LocationManager
+        val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        if (location != null) {
+            map.animateCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(
+                        location.latitude,
+                        location.longitude
+                    ), 15f
+                )
+            )
+        }
     }
 
     private fun onLocationSelected() {
@@ -177,6 +192,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if (isPermissionGranted()) {
             Log.i(TAG, "isPermissionGranted")
             map.isMyLocationEnabled = true
+            map.setContentDescription("Google Map")
+            zoomIn()
         } else {
             Log.i(TAG, "requestPermissions")
             requestPermissions(
@@ -274,5 +291,3 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 }
-
-private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
